@@ -54,6 +54,4 @@ public:
 
 
 	void SendGame(int iType, CString strTmp);
-	CString m_strSend;
-	afx_msg void OnBnClickedButtonSend();
 };
