@@ -56,4 +56,6 @@ public:
 	void SendGame(int iType, CString strTmp);
 	CString m_strSend;
 	afx_msg void OnBnClickedButtonSend();
+//	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+
 };
