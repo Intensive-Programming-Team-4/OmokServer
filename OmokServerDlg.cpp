@@ -199,22 +199,20 @@ void COmokServerDlg::SendGame(int iType, CString strTmp) {
 	m_socCom->Send(pTmp, 256);
 }
 
-// 클라이언트에서 접속 요청이 왔을 떄
+// 클라이언트에서 접속 요청이 왔을 때
 LPARAM COmokServerDlg::OnAccept(UINT wParam, LPARAM lParam) {
-
 	// 통신용 소켓을 생성한 뒤
 	m_socCom = new CSocCom;
 
 	// 서버소켓과 통신소켓 연결
 	m_socCom = m_socServer.GetAcceptSocCom();
-
 	m_socCom->Init(this->m_hWnd);
-	m_strConnect = _T("접속성공");
-	m_strStatus = _T("게임을 초기화 하십시오.");
 
 	// 접속했으니 점속 값 변경
 	m_bConnect = TRUE;
 	SendGame(SOC_TEXT, "접속성공");
+	m_strConnect = _T("접속성공");
+	m_strStatus = _T("게임을 초기화 하십시오.");
 	GetDlgItem(IDC_BUTTON_SEND)->EnableWindow(TRUE);
 	UpdateData(FALSE);
 
