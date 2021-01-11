@@ -77,6 +77,7 @@ BEGIN_MESSAGE_MAP(COmokServerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_SEND, &COmokServerDlg::OnBnClickedButtonSend)
 	ON_MESSAGE(UM_ACCEPT, (LRESULT(AFX_MSG_CALL CWnd::*)(WPARAM, LPARAM))OnAccept)
 	ON_MESSAGE(UM_RECEIVE, (LRESULT(AFX_MSG_CALL CWnd::*)(WPARAM, LPARAM))OnReceive)
+
 END_MESSAGE_MAP()
 
 
@@ -287,3 +288,4 @@ void COmokServerDlg::OnBnClickedButtonSend()
 	int i = m_list.GetCount();
 	m_list.InsertString(i, strTmp);
 }
+
