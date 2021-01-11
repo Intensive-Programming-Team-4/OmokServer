@@ -52,6 +52,9 @@ END_MESSAGE_MAP()
 
 COmokServerDlg::COmokServerDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_OMOKSERVER_DIALOG, pParent)
+	, m_strConnect(_T("접속 전입니다."))
+	, m_strMe(_T("대기중"))
+	, m_strStatus(_T("대기중"))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -59,6 +62,10 @@ COmokServerDlg::COmokServerDlg(CWnd* pParent /*=nullptr*/)
 void COmokServerDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_LIST1, m_list);
+	DDX_Text(pDX, IDC_STATIC_CONNECT, m_strConnect);
+	DDX_Text(pDX, IDC_STATIC_ME, m_strMe);
+	DDX_Text(pDX, IDC_STATIC_STATUS, m_strStatus);
 }
 
 BEGIN_MESSAGE_MAP(COmokServerDlg, CDialogEx)
@@ -100,6 +107,28 @@ BOOL COmokServerDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
+
+	// 방화벽 개방
+	WSADATA wsa;
+	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+		return -1;
+
+	// 서버 소켓 생성(포트번호 : 5000)
+	if (m_socServer.Create(5000) == FALSE) {
+		int err = m_socServer.GetLastError();
+		CString error = _T("ERROR : Fail to create Server (ERROR CODE : ");
+		CString strErr = _T("");
+		strErr.Format(_T("%d)"), err);
+		AfxMessageBox(error + strErr);
+	}
+	else {
+		//MessageBox(_T("Success to Create Socket Server"));
+	}
+	// 클라이언트 접속 대기
+	m_socServer.Listen();
+
+	// 소켓 클래스와 메인 윈도우 (여기서는 CChatServerDlg)를 연결
+	m_socServer.Init(this->m_hWnd);
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -153,3 +182,83 @@ HCURSOR COmokServerDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+
+// 데이터 전송
+void COmokServerDlg::SendGame(int iType, CString strTmp) {
+
+	UpdateData(TRUE);
+	char pTmp[256];
+	memset(pTmp, '\0', 256);
+	sprintf(pTmp, "%d%s", iType, (LPSTR)(LPCTSTR)strTmp);
+
+	m_socCom->Send(pTmp, 256);
+}
+
+// 클라이언트에서 접속 요청이 왔을 떄
+LPARAM COmokServerDlg::OnAccept(UINT wParam, LPARAM lParam) {
+
+	// 통신용 소켓을 생성한 뒤
+	m_socCom = new CSocCom;
+
+	// 서버소켓과 통신소켓 연결
+	m_socCom = m_socServer.GetAcceptSocCom();
+
+	m_socCom->Init(this->m_hWnd);
+	m_strConnect = _T("접속성공");
+	m_strStatus = _T("게임을 초기화 하십시오.");
+
+	// 접속했으니 점속 값 변경
+	m_bConnect = TRUE;
+	SendGame(SOC_TEXT, "접속성공");
+	GetDlgItem(IDC_BUTTON_SEND)->EnableWindow(TRUE);
+	UpdateData(FALSE);
+
+	return TRUE;
+}
+
+
+// 접속된 곳에서 데이터가 도착했을 때
+LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
+
+	char pTmp[256];
+	CString strTmp, str;
+	memset(pTmp, '\0', 256);
+
+	// 데이터를 pTmp에 받는다
+	m_socCom->Receive(pTmp, 256);
+
+	// strTmp에 헤더 저장
+	strTmp.Format(_T("%c"), pTmp[0]);
+
+	int iType = atoi((char*)(LPCTSTR)strTmp);
+
+	if (iType == SOC_GAMESTART) {
+		m_bStartCnt = TRUE;
+
+		// 빙고판을 다 채웠을 경우
+		if (m_bStart) {
+			m_strMe = _T("당신의 차례입니다.");
+			m_strStatus = _T("원하는곳을 선택하세요.");
+			m_bMe = TRUE;
+			UpdateData(FALSE);
+		}
+	}
+
+	// 메시지 전송
+	else if (iType == SOC_TEXT) {
+		str.Format(_T("%s"), (LPCTSTR)(pTmp + 1));
+		m_list.AddString(str);
+	}
+
+	// 바둑판 클릭
+	else if (iType == SOC_CHECK) {
+		str.Format(_T("%s"), (LPCTSTR)(pTmp + 1));
+	}
+
+	// 클라이언트 유저 승리 시
+	else if (iType == SOC_GAMEEND) {
+
+	}
+
+	return TRUE;
+}
