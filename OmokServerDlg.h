@@ -62,6 +62,8 @@ public:
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	CString m_strSend;
 	afx_msg void OnBnClickedButtonSend();
-
 	afx_msg void OnBnClickedButtonStart();
+	int sec = 30;
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	CStatic m_timer;
 };

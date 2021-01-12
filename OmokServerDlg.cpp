@@ -31,6 +31,7 @@ public:
 // 구현입니다.
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
@@ -68,6 +69,8 @@ void COmokServerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATIC_ME, m_strMe);
 	DDX_Text(pDX, IDC_STATIC_STATUS, m_strStatus);
 	DDX_Text(pDX, IDC_EDIT_SEND, m_strSend);
+	//  DDX_Text(pDX, IDC_STATIC_TIMER, m_timer);
+	DDX_Control(pDX, IDC_STATIC_TIMER, m_timer);
 }
 
 BEGIN_MESSAGE_MAP(COmokServerDlg, CDialogEx)
@@ -79,6 +82,7 @@ BEGIN_MESSAGE_MAP(COmokServerDlg, CDialogEx)
 	ON_MESSAGE(UM_ACCEPT, (LRESULT(AFX_MSG_CALL CWnd::*)(WPARAM, LPARAM))OnAccept)
 	ON_MESSAGE(UM_RECEIVE, (LRESULT(AFX_MSG_CALL CWnd::*)(WPARAM, LPARAM))OnReceive)
 	ON_BN_CLICKED(IDC_BUTTON_START, &COmokServerDlg::OnBnClickedButtonStart)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -211,6 +215,7 @@ void COmokServerDlg::InitGame()
 	m_bSvrEnd = FALSE;
 	m_bCntEnd = FALSE;
 	m_iOrder = 1;
+	SetTimer(1, 1000, NULL);
 }
 
 // 데이터 전송
@@ -287,30 +292,31 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 	// 바둑판 클릭
 	else if (iType == SOC_CHECK) {
 		str.Format(_T("%s"), (LPCTSTR)(pTmp + 1));
-
-
-		str.Format(_T("%s"), (LPCTSTR)(pTmp + 1));
 		CString i, j;
 
 		int iRow = atoi(str.Left(2));
 		int iCol = atoi(str.Right(2));
+		
+		if (iRow == -1 && iCol == -1) {
+			// 타이머의 시간초과로 넘어온 경우
+		}
+		else {
+			// 바둑알 놓기
+			CClientDC dc(this);
+			CBrush* p_old_brush;
 
-		// 바둑알 놓기
-		CClientDC dc(this);
-		CBrush* p_old_brush;
+			// 클라이언트 (백돌)
+			p_old_brush = (CBrush*)dc.SelectStockObject(WHITE_BRUSH);
 
-		// 클라이언트 (백돌)
-		p_old_brush = (CBrush*)dc.SelectStockObject(WHITE_BRUSH);
+			CString msg;
+			iCol = (iCol + 1) * 35;
+			iRow = (iRow + 1) * 35;
 
-		CString msg;
-		iCol = (iCol + 1) * 35;
-		iRow = (iRow + 1) * 35;
-
-		msg.Format(_T("%03d %03d"), iRow, iCol);
-		//MessageBox(msg);
-		dc.Ellipse(iCol - 35 / 2, iRow - 35 / 2, iCol + 35 / 2, iRow + 35 / 2);
-		dc.SelectObject(p_old_brush);
-
+			msg.Format(_T("%03d %03d"), iRow, iCol);
+			//MessageBox(msg);
+			dc.Ellipse(iCol - 35 / 2, iRow - 35 / 2, iCol + 35 / 2, iRow + 35 / 2);
+			dc.SelectObject(p_old_brush);
+		}
 
 		// 차례 변경
 		m_bMe = TRUE;
@@ -404,7 +410,6 @@ void COmokServerDlg::OnLButtonDown(UINT nFlags, CPoint point)
 			m_strStatus = _T("대기하세요.");
 			UpdateData(FALSE);
 		}
-
 	}
 
 	CDialogEx::OnLButtonDown(nFlags, point);
@@ -438,4 +443,34 @@ void COmokServerDlg::OnBnClickedButtonStart()
 	SendGame(SOC_GAMESTART, "");
 	m_bStart = TRUE;
 	GetDlgItem(IDC_BUTTON_START)->EnableWindow(FALSE);
+}
+
+void COmokServerDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+	CString time;
+
+	switch (nIDEvent) {
+	case 1:
+		if (m_bStart && m_bMe) {
+			if (sec > 0) {
+				time.Format(_T("%d"), sec--);
+			}
+			else {
+				m_bMe = FALSE;
+
+				CString str;
+				str.Format(_T("%02d,%02d"), -1, -1);
+				SendGame(SOC_CHECK, str);
+			}
+		}
+		else {
+			sec = 30;
+			time.Format(_T("%d"), sec);
+		}
+		m_timer.SetWindowText(time);
+		break;
+	}
+
+	CDialogEx::OnTimer(nIDEvent);
 }
