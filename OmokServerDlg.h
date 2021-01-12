@@ -57,4 +57,7 @@ public:
 	void DrawRec();
 	void DrawLine();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	CString m_strSend;
+	afx_msg void OnBnClickedButtonSend();
+
 };

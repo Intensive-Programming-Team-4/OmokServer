@@ -55,6 +55,7 @@ COmokServerDlg::COmokServerDlg(CWnd* pParent /*=nullptr*/)
 	, m_strConnect(_T("접속 전입니다."))
 	, m_strMe(_T("대기중"))
 	, m_strStatus(_T("대기중"))
+	, m_strSend(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -66,6 +67,7 @@ void COmokServerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATIC_CONNECT, m_strConnect);
 	DDX_Text(pDX, IDC_STATIC_ME, m_strMe);
 	DDX_Text(pDX, IDC_STATIC_STATUS, m_strStatus);
+	DDX_Text(pDX, IDC_EDIT_SEND, m_strSend);
 }
 
 BEGIN_MESSAGE_MAP(COmokServerDlg, CDialogEx)
@@ -73,6 +75,9 @@ BEGIN_MESSAGE_MAP(COmokServerDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_WM_LBUTTONDOWN()
+	ON_BN_CLICKED(IDC_BUTTON_SEND, &COmokServerDlg::OnBnClickedButtonSend)
+	ON_MESSAGE(UM_ACCEPT, (LRESULT(AFX_MSG_CALL CWnd::*)(WPARAM, LPARAM))OnAccept)
+	ON_MESSAGE(UM_RECEIVE, (LRESULT(AFX_MSG_CALL CWnd::*)(WPARAM, LPARAM))OnReceive)
 END_MESSAGE_MAP()
 
 
@@ -338,3 +343,24 @@ void COmokServerDlg::OnLButtonDown(UINT nFlags, CPoint point)
 
 	CDialogEx::OnLButtonDown(nFlags, point);
 }
+
+void COmokServerDlg::OnBnClickedButtonSend()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	UpdateData(TRUE);
+
+	char pTmp[256];
+	CString strTmp;
+	memset(pTmp, '\0', 256);
+	memcpy(pTmp, (unsigned char*)(LPCTSTR)m_strSend, 256);
+	//	strcpy(pTmp, m_strSend);
+
+	// 전송
+	m_socCom->Send(pTmp, 256);
+	SendGame(SOC_TEXT, m_strSend);
+	// 전송한 데이터도 리스트박스에 보여준다
+	strTmp.Format(_T("%s"), (LPCTSTR)pTmp);
+	int i = m_list.GetCount();
+	m_list.InsertString(i, strTmp);
+}
+
