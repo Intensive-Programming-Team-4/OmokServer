@@ -54,4 +54,7 @@ public:
 
 
 	void SendGame(int iType, CString strTmp);
+	void DrawRec();
+	void DrawLine();
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 };
