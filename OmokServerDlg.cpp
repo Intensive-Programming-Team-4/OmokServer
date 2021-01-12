@@ -317,8 +317,8 @@ void COmokServerDlg::OnLButtonDown(UINT nFlags, CPoint point)
 	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
 	
 	// 게임과 관련 없는 곳 클릭 시
-	if (point.x > 535 || point.y > 535)	return;
-	if (point.x < 10 || point.y < 10)	return;
+	if (point.x > 560 || point.y > 560)	return;
+	if (point.x < 35 || point.y < 35)	return;
 	//if (!m_bConnect)	return;
 
 	CString msg;
