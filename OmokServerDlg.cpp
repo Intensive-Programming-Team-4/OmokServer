@@ -74,10 +74,10 @@ BEGIN_MESSAGE_MAP(COmokServerDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_WM_LBUTTONDOWN()
 	ON_BN_CLICKED(IDC_BUTTON_SEND, &COmokServerDlg::OnBnClickedButtonSend)
 	ON_MESSAGE(UM_ACCEPT, (LRESULT(AFX_MSG_CALL CWnd::*)(WPARAM, LPARAM))OnAccept)
 	ON_MESSAGE(UM_RECEIVE, (LRESULT(AFX_MSG_CALL CWnd::*)(WPARAM, LPARAM))OnReceive)
-
 END_MESSAGE_MAP()
 
 
@@ -179,6 +179,11 @@ void COmokServerDlg::OnPaint()
 	{
 		CDialogEx::OnPaint();
 	}
+
+
+	// 바둑판 생성
+	DrawRec();
+	DrawLine();
 }
 
 // 사용자가 최소화된 창을 끄는 동안에 커서가 표시되도록 시스템에서
@@ -267,6 +272,76 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 	}
 
 	return TRUE;
+}
+
+
+// 사각형 그리기 (250 *250 시작은 (35, 35))
+void COmokServerDlg::DrawRec() {
+
+	CClientDC dc(this);
+	CBrush br;
+	br.CreateSolidBrush(RGB(218, 164, 43));
+
+	CBrush* lbr = dc.SelectObject(&br);
+	dc.Rectangle(35, 35, 35 + 525, 35 + 525);
+	dc.SelectObject(lbr);
+}
+
+
+// 선 그리기
+void COmokServerDlg::DrawLine() {
+
+	CClientDC dc(this);
+	CPen pen;
+
+	pen.CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
+
+	CPen* lodp = dc.SelectObject(&pen);
+
+	for (int i = 0; i < 16; i++) {
+		dc.MoveTo(35, 35 + i * 35);
+		dc.LineTo(35 + 35 * 15 , 35 + i * 35);
+
+	}
+
+	for (int i = 0; i < 16; i++) {
+		dc.MoveTo(35 + i * 35, 35);
+		dc.LineTo(35 + i * 35, 35 * 15 + 35);
+	}
+
+	dc.SelectObject(pen);
+}
+
+void COmokServerDlg::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+	
+	// 게임과 관련 없는 곳 클릭 시
+	if (point.x > 535 || point.y > 535)	return;
+	if (point.x < 10 || point.y < 10)	return;
+	//if (!m_bConnect)	return;
+
+	CString msg;
+
+	msg.Format(_T("%2d %02d"), point.x, point.y);
+
+	// 바둑알 놓기
+	CClientDC dc(this);
+	CBrush* p_old_brush;
+
+	// 흑돌이면
+	p_old_brush = (CBrush*)dc.SelectStockObject(BLACK_BRUSH);
+
+	// 백돌이면
+	p_old_brush = (CBrush*)dc.SelectStockObject(WHITE_BRUSH);
+
+
+	point.x = ((point.x + 35 / 2 ) / 35) * 35;//격 맞춤
+	point.y = ((point.y + 35 / 2) / 35) * 35;
+	dc.Ellipse(point.x - 35 / 2, point.y - 35 / 2, point.x + 35 / 2, point.y + 35 / 2);
+	dc.SelectObject(p_old_brush);
+
+	CDialogEx::OnLButtonDown(nFlags, point);
 }
 
 void COmokServerDlg::OnBnClickedButtonSend()
