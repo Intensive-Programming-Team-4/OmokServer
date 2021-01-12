@@ -44,7 +44,7 @@ public:
 
 	int m_iOrder;
 	BOOL m_bGame[15][15];	// 좌표 체크
-
+	BOOL m_bStone[15][15];	// 내 바둑알 좌표
 
 	BOOL m_bConnect;	// 다른쪽과 접속했을때 TRUE
 	//BOOL m_bStartSvr;	// 서버가 준비 끝나면 TRUE

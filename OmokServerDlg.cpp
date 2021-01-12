@@ -202,6 +202,7 @@ void COmokServerDlg::InitGame()
 	for (int i = 0; i < 15; i++) {
 		for (int j = 0; j < 15; j++) {
 			m_bGame[i][j] = FALSE;
+			m_bStone[i][j] = FALSE;
 		}
 	}
 	m_bStartCnt = FALSE;
@@ -287,9 +288,6 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 	// 바둑판 클릭
 	else if (iType == SOC_CHECK) {
 		str.Format(_T("%s"), (LPCTSTR)(pTmp + 1));
-
-
-		str.Format(_T("%s"), (LPCTSTR)(pTmp + 1));
 		CString i, j;
 
 		int iRow = atoi(str.Left(2));
@@ -302,15 +300,11 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 		// 클라이언트 (백돌)
 		p_old_brush = (CBrush*)dc.SelectStockObject(WHITE_BRUSH);
 
-		CString msg;
 		iCol = (iCol + 1) * 35;
 		iRow = (iRow + 1) * 35;
 
-		msg.Format(_T("%03d %03d"), iRow, iCol);
-		//MessageBox(msg);
 		dc.Ellipse(iCol - 35 / 2, iRow - 35 / 2, iCol + 35 / 2, iRow + 35 / 2);
 		dc.SelectObject(p_old_brush);
-
 
 		// 차례 변경
 		m_bMe = TRUE;
@@ -321,7 +315,9 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 
 	// 클라이언트 유저 승리 시
 	else if (iType == SOC_GAMEEND) {
-
+		m_bCntEnd = TRUE;
+		CWnd::MessageBox("백이 승리했습니다. 새 게임을 시작합니다.", "백돌 승리", MB_OK);
+		Sleep(1000);
 	}
 
 	return TRUE;
@@ -385,18 +381,148 @@ void COmokServerDlg::OnLButtonDown(UINT nFlags, CPoint point)
 		point.x = ((point.x + 35 / 2) / 35) * 35;//격 맞춤
 		point.y = ((point.y + 35 / 2) / 35) * 35;
 
-		int i = point.y / 35 - 1;
-		int j = point.x / 35 - 1;
+		int nCol = point.x / 35 - 1;
+		int nRow = point.y / 35 - 1;
 
-		if (!m_bGame[i][j]) {
-			m_bGame[i][j] = TRUE;
+		// 바둑알이 놓인 곳이 아니면
+		if (!m_bGame[nRow][nCol]) {
+
+			int Win = 0;
+
+			m_bGame[nRow][nCol] = TRUE;
+			m_bStone[nRow][nCol] = TRUE;
 
 			dc.Ellipse(point.x - 35 / 2, point.y - 35 / 2, point.x + 35 / 2, point.y + 35 / 2);
 			dc.SelectObject(p_old_brush);
 
 			CString str;
-			str.Format(_T("%02d,%02d"), i, j);
+			str.Format(_T("%02d,%02d"), nRow, nCol);
 			SendGame(SOC_CHECK, str);
+
+			//무르기 저장
+			int BackPoint_x, BackPoint_y;
+			BackPoint_x = nCol;
+			BackPoint_y = nRow;
+
+
+			register int i;
+			int nCount = 0;
+
+			// 가로 방향 승리 판정
+			for (i = 0; i < 19; i++) {
+				if (m_bStone[nRow][i] == 1)
+					nCount++;
+				else
+					nCount = 0;
+
+				if (nCount == 5) { Win = 1; }
+			}
+
+			// 세로 방향 승리 판정
+			nCount = 0;
+			for (i = 0; i < 19; i++)
+			{
+				if (m_bStone[i][nCol] == 1) { nCount++; }
+				else { nCount = 0; }
+
+				if (nCount == 5) { Win = 1; }
+			}
+
+			////// 대각선 방향 승리 판정
+
+			int sRow, sCol; // 왼쪽 위의 시작 위치
+			int eRow, eCol; // 오른쪽 아래의 끝 위치
+			int RowMover, ColMover;
+
+			RowMover = nRow;
+			ColMover = nCol;
+			while (RowMover != 0 && ColMover != 0)
+			{
+				RowMover--;
+				ColMover--;
+			}
+
+			// 대각 방향 최-좌상단 좌표 획득
+			sRow = RowMover;
+			sCol = ColMover;
+
+			RowMover = nRow;
+			ColMover = nCol;
+			while (RowMover != 16 && ColMover != 16) {
+				RowMover++;
+				ColMover++;
+			}
+
+			// 대각 방향 최-우하단 좌표 획득
+			eRow = RowMover;
+			eCol = ColMover;
+
+			// 왼쪽 위에서 오른쪽 아래로 향하는 대각선 방향의 오목을 검색
+			nCount = 0;
+			while (sCol <= eCol && sRow <= eRow)
+			{
+				if (m_bStone[sRow][sCol] == 1)
+				{
+					nCount++;
+				}
+				else
+				{
+					nCount = 0;
+				}
+
+				if (nCount == 5) { Win = 1; }
+				sRow++;
+				sCol++;
+			}
+
+			RowMover = nRow;
+			ColMover = nCol;
+			while (RowMover != 0 && ColMover != 16) {
+				RowMover--;
+				ColMover++;
+			}
+
+			// 대각 방향 최-우상단 좌표 획득
+			sRow = RowMover;
+			sCol = ColMover;
+
+			RowMover = nRow;
+			ColMover = nCol;
+			while (RowMover != 16 && ColMover != 0) {
+				RowMover++;
+				ColMover--;
+			}
+
+			// 대각 방향 최-좌하단 좌표 획득
+			eRow = RowMover;
+			eCol = ColMover;
+
+			// 왼쪽 아래에서 오른쪽 위로 향하는 대각선 방향의 오목을 검색
+			nCount = 0;
+			while (sCol >= eCol && sRow <= eRow)
+			{
+				if (m_bStone[sRow][sCol] == 1)
+				{
+					nCount++;
+				}
+				else
+				{
+					nCount = 0;
+				}
+
+				if (nCount == 5) { Win = 1; }
+				sRow++;
+				sCol--;
+			}
+
+
+			if (Win == 1)
+			{
+				CWnd::MessageBox("흑이 승리했습니다. 새 게임을 시작합니다.", "흑돌 승리", MB_OK);
+				SendGame(SOC_GAMEEND, "");
+				//초기화
+				InitGame();
+			}
 
 			// 차례 변경
 			m_bMe = FALSE;
@@ -404,9 +530,7 @@ void COmokServerDlg::OnLButtonDown(UINT nFlags, CPoint point)
 			m_strStatus = _T("대기하세요.");
 			UpdateData(FALSE);
 		}
-
 	}
-
 	CDialogEx::OnLButtonDown(nFlags, point);
 }
 
@@ -436,6 +560,7 @@ void COmokServerDlg::OnBnClickedButtonStart()
 {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	SendGame(SOC_GAMESTART, "");
+
 	m_bStart = TRUE;
 	GetDlgItem(IDC_BUTTON_START)->EnableWindow(FALSE);
 }
