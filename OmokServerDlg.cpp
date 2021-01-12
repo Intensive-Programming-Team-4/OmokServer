@@ -199,11 +199,12 @@ HCURSOR COmokServerDlg::OnQueryDragIcon()
 
 void COmokServerDlg::InitGame()
 {
-	for (int i = 0; i < 5; i++) {
-		for (int j = 0; j < 5; j++) {
+	for (int i = 0; i < 15; i++) {
+		for (int j = 0; j < 15; j++) {
 			m_bGame[i][j] = FALSE;
 		}
 	}
+	m_bStartCnt = FALSE;
 
 	m_bStart = FALSE;
 	m_bMe = FALSE;
@@ -386,20 +387,24 @@ void COmokServerDlg::OnLButtonDown(UINT nFlags, CPoint point)
 
 		int i = point.y / 35 - 1;
 		int j = point.x / 35 - 1;
-		m_bGame[i][j] = TRUE;
 
-		dc.Ellipse(point.x - 35 / 2, point.y - 35 / 2, point.x + 35 / 2, point.y + 35 / 2);
-		dc.SelectObject(p_old_brush);
+		if (!m_bGame[i][j]) {
+			m_bGame[i][j] = TRUE;
 
-		CString str;
-		str.Format(_T("%02d,%02d"), i, j);
-		SendGame(SOC_CHECK, str);
+			dc.Ellipse(point.x - 35 / 2, point.y - 35 / 2, point.x + 35 / 2, point.y + 35 / 2);
+			dc.SelectObject(p_old_brush);
 
-		// 차례 변경
-		m_bMe = FALSE;
-		m_strMe = _T("상대방의 차례 입니다.");
-		m_strStatus = _T("대기하세요.");
-		UpdateData(FALSE);
+			CString str;
+			str.Format(_T("%02d,%02d"), i, j);
+			SendGame(SOC_CHECK, str);
+
+			// 차례 변경
+			m_bMe = FALSE;
+			m_strMe = _T("상대방의 차례 입니다.");
+			m_strStatus = _T("대기하세요.");
+			UpdateData(FALSE);
+		}
+
 	}
 
 	CDialogEx::OnLButtonDown(nFlags, point);
