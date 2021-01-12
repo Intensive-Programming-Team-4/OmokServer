@@ -31,6 +31,7 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
+	void InitGame();
 	afx_msg LPARAM OnAccept(UINT wParam, LPARAM lParam);
 	afx_msg LPARAM OnReceive(UINT wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
@@ -42,6 +43,8 @@ public:
 
 
 	int m_iOrder;
+	BOOL m_bGame[15][15];	// 좌표 체크
+
 
 	BOOL m_bConnect;	// 다른쪽과 접속했을때 TRUE
 	//BOOL m_bStartSvr;	// 서버가 준비 끝나면 TRUE
@@ -60,4 +63,5 @@ public:
 	CString m_strSend;
 	afx_msg void OnBnClickedButtonSend();
 
+	afx_msg void OnBnClickedButtonStart();
 };

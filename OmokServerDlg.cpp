@@ -78,6 +78,7 @@ BEGIN_MESSAGE_MAP(COmokServerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_SEND, &COmokServerDlg::OnBnClickedButtonSend)
 	ON_MESSAGE(UM_ACCEPT, (LRESULT(AFX_MSG_CALL CWnd::*)(WPARAM, LPARAM))OnAccept)
 	ON_MESSAGE(UM_RECEIVE, (LRESULT(AFX_MSG_CALL CWnd::*)(WPARAM, LPARAM))OnReceive)
+	ON_BN_CLICKED(IDC_BUTTON_START, &COmokServerDlg::OnBnClickedButtonStart)
 END_MESSAGE_MAP()
 
 
@@ -118,6 +119,9 @@ BOOL COmokServerDlg::OnInitDialog()
 	WSADATA wsa;
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 		return -1;
+
+	// 게임 초기화
+	InitGame();
 
 	// 서버 소켓 생성(포트번호 : 5000)
 	if (m_socServer.Create(5000) == FALSE) {
@@ -193,6 +197,20 @@ HCURSOR COmokServerDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+void COmokServerDlg::InitGame()
+{
+	for (int i = 0; i < 5; i++) {
+		for (int j = 0; j < 5; j++) {
+			m_bGame[i][j] = FALSE;
+		}
+	}
+
+	m_bStart = FALSE;
+	m_bMe = FALSE;
+	m_bSvrEnd = FALSE;
+	m_bCntEnd = FALSE;
+	m_iOrder = 1;
+}
 
 // 데이터 전송
 void COmokServerDlg::SendGame(int iType, CString strTmp) {
@@ -215,13 +233,16 @@ LPARAM COmokServerDlg::OnAccept(UINT wParam, LPARAM lParam) {
 	m_socCom = m_socServer.GetAcceptSocCom();
 
 	m_socCom->Init(this->m_hWnd);
-	m_strConnect = _T("접속성공");
-	m_strStatus = _T("게임을 초기화 하십시오.");
+
 
 	// 접속했으니 점속 값 변경
 	m_bConnect = TRUE;
 	SendGame(SOC_TEXT, "접속성공");
+
+	m_strConnect = _T("접속성공");
+	m_strStatus = _T("준비버튼을 눌러주세요.");
 	GetDlgItem(IDC_BUTTON_SEND)->EnableWindow(TRUE);
+	GetDlgItem(IDC_BUTTON_START)->EnableWindow(TRUE);
 	UpdateData(FALSE);
 
 	return TRUE;
@@ -246,10 +267,11 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 	if (iType == SOC_GAMESTART) {
 		m_bStartCnt = TRUE;
 
-		// 빙고판을 다 채웠을 경우
+		// 게임이 시작됨
 		if (m_bStart) {
+			MessageBox(_T("게임이 시작되었습니다."));
 			m_strMe = _T("당신의 차례입니다.");
-			m_strStatus = _T("원하는곳을 선택하세요.");
+			m_strStatus = _T("원하는 곳을 선택하세요.");
 			m_bMe = TRUE;
 			UpdateData(FALSE);
 		}
@@ -264,6 +286,36 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 	// 바둑판 클릭
 	else if (iType == SOC_CHECK) {
 		str.Format(_T("%s"), (LPCTSTR)(pTmp + 1));
+
+
+		str.Format(_T("%s"), (LPCTSTR)(pTmp + 1));
+		CString i, j;
+
+		int iRow = atoi(str.Left(2));
+		int iCol = atoi(str.Right(2));
+
+		// 바둑알 놓기
+		CClientDC dc(this);
+		CBrush* p_old_brush;
+
+		// 클라이언트 (백돌)
+		p_old_brush = (CBrush*)dc.SelectStockObject(WHITE_BRUSH);
+
+		CString msg;
+		iCol = (iCol + 1) * 35;
+		iRow = (iRow + 1) * 35;
+
+		msg.Format(_T("%03d %03d"), iRow, iCol);
+		//MessageBox(msg);
+		dc.Ellipse(iCol - 35 / 2, iRow - 35 / 2, iCol + 35 / 2, iRow + 35 / 2);
+		dc.SelectObject(p_old_brush);
+
+
+		// 차례 변경
+		m_bMe = TRUE;
+		m_strMe = _T("당신의 차례입니다.");
+		m_strStatus = _T("원하는 곳을 선택 하세요.");
+		UpdateData(FALSE);
 	}
 
 	// 클라이언트 유저 승리 시
@@ -319,27 +371,36 @@ void COmokServerDlg::OnLButtonDown(UINT nFlags, CPoint point)
 	// 게임과 관련 없는 곳 클릭 시
 	if (point.x > 560 || point.y > 560)	return;
 	if (point.x < 35 || point.y < 35)	return;
-	//if (!m_bConnect)	return;
+	if (!m_bConnect)	return;
 
-	CString msg;
+	if (m_bStart && m_bStartCnt && m_bMe) {
+		// 바둑알 놓기
+		CClientDC dc(this);
+		CBrush* p_old_brush;
 
-	msg.Format(_T("%2d %02d"), point.x, point.y);
+		// 흑돌(서버)
+		p_old_brush = (CBrush*)dc.SelectStockObject(BLACK_BRUSH);
 
-	// 바둑알 놓기
-	CClientDC dc(this);
-	CBrush* p_old_brush;
+		point.x = ((point.x + 35 / 2) / 35) * 35;//격 맞춤
+		point.y = ((point.y + 35 / 2) / 35) * 35;
 
-	// 흑돌이면
-	p_old_brush = (CBrush*)dc.SelectStockObject(BLACK_BRUSH);
+		int i = point.y / 35 - 1;
+		int j = point.x / 35 - 1;
+		m_bGame[i][j] = TRUE;
 
-	// 백돌이면
-	p_old_brush = (CBrush*)dc.SelectStockObject(WHITE_BRUSH);
+		dc.Ellipse(point.x - 35 / 2, point.y - 35 / 2, point.x + 35 / 2, point.y + 35 / 2);
+		dc.SelectObject(p_old_brush);
 
+		CString str;
+		str.Format(_T("%02d,%02d"), i, j);
+		SendGame(SOC_CHECK, str);
 
-	point.x = ((point.x + 35 / 2 ) / 35) * 35;//격 맞춤
-	point.y = ((point.y + 35 / 2) / 35) * 35;
-	dc.Ellipse(point.x - 35 / 2, point.y - 35 / 2, point.x + 35 / 2, point.y + 35 / 2);
-	dc.SelectObject(p_old_brush);
+		// 차례 변경
+		m_bMe = FALSE;
+		m_strMe = _T("상대방의 차례 입니다.");
+		m_strStatus = _T("대기하세요.");
+		UpdateData(FALSE);
+	}
 
 	CDialogEx::OnLButtonDown(nFlags, point);
 }
@@ -364,3 +425,12 @@ void COmokServerDlg::OnBnClickedButtonSend()
 	m_list.InsertString(i, strTmp);
 }
 
+
+// 게임 준비를 눌렀을 경우
+void COmokServerDlg::OnBnClickedButtonStart()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	SendGame(SOC_GAMESTART, "");
+	m_bStart = TRUE;
+	GetDlgItem(IDC_BUTTON_START)->EnableWindow(FALSE);
+}
