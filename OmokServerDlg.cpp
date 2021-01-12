@@ -71,6 +71,7 @@ void COmokServerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_SEND, m_strSend);
 	//  DDX_Text(pDX, IDC_STATIC_TIMER, m_timer);
 	DDX_Control(pDX, IDC_STATIC_TIMER, m_timer);
+	DDX_Control(pDX, IDC_BUTTON_GIVEUP, m_giveup);
 }
 
 BEGIN_MESSAGE_MAP(COmokServerDlg, CDialogEx)
@@ -83,6 +84,7 @@ BEGIN_MESSAGE_MAP(COmokServerDlg, CDialogEx)
 	ON_MESSAGE(UM_RECEIVE, (LRESULT(AFX_MSG_CALL CWnd::*)(WPARAM, LPARAM))OnReceive)
 	ON_BN_CLICKED(IDC_BUTTON_START, &COmokServerDlg::OnBnClickedButtonStart)
 	ON_WM_TIMER()
+	ON_BN_CLICKED(IDC_BUTTON_GIVEUP, &COmokServerDlg::OnBnClickedButtonGiveup)
 END_MESSAGE_MAP()
 
 
@@ -323,10 +325,18 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 		}
 	}
 
-	// 게임에서 패배시
+	// 게임에서 패배할 시 혹은 기권할 시
 	else if (iType == SOC_GAMEEND) {
 		m_bCntEnd = TRUE;
 		CWnd::MessageBox("백이 승리했습니다. 새 게임을 시작합니다.", "백돌 승리", MB_OK);
+		Sleep(1000);
+		InitGame();
+		Invalidate(TRUE);
+		GetDlgItem(IDC_BUTTON_START)->EnableWindow(TRUE);
+	}
+	else if (iType == SOC_GIVEUP) {
+		m_bSvrEnd = TRUE;
+		CWnd::MessageBox("흑이 승리했습니다. 새 게임을 시작합니다.", "흑돌 승리", MB_OK);
 		Sleep(1000);
 		InitGame();
 		Invalidate(TRUE);
@@ -609,4 +619,19 @@ void COmokServerDlg::OnTimer(UINT_PTR nIDEvent)
 	}
 
 	CDialogEx::OnTimer(nIDEvent);
+}
+
+
+void COmokServerDlg::OnBnClickedButtonGiveup()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	if (m_bStart) {
+		m_bCntEnd = TRUE;
+		SendGame(SOC_GIVEUP, "");
+		CWnd::MessageBox("백이 승리했습니다. 새 게임을 시작합니다.", "백돌 승리", MB_OK);
+		Sleep(1000);
+		InitGame();
+		Invalidate(TRUE);
+		GetDlgItem(IDC_BUTTON_START)->EnableWindow(TRUE);
+	}
 }
