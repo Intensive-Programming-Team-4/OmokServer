@@ -297,7 +297,7 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 
 		int iRow = atoi(str.Left(2));
 		int iCol = atoi(str.Right(2));
-		
+
 		if (iRow == -1 && iCol == -1) {
 			// 타이머의 시간초과로 넘어온 경우
 		}
@@ -306,25 +306,21 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 			CClientDC dc(this);
 			CBrush* p_old_brush;
 
+			// 클라이언트 (백돌)
+			p_old_brush = (CBrush*)dc.SelectStockObject(WHITE_BRUSH);
 
-		// 바둑알 놓기
-		CClientDC dc(this);
-		CBrush* p_old_brush;
+			iCol = (iCol + 1) * 35;
+			iRow = (iRow + 1) * 35;
 
-		// 클라이언트 (백돌)
-		p_old_brush = (CBrush*)dc.SelectStockObject(WHITE_BRUSH);
+			dc.Ellipse(iCol - 35 / 2, iRow - 35 / 2, iCol + 35 / 2, iRow + 35 / 2);
+			dc.SelectObject(p_old_brush);
 
-		iCol = (iCol + 1) * 35;
-		iRow = (iRow + 1) * 35;
-
-		dc.Ellipse(iCol - 35 / 2, iRow - 35 / 2, iCol + 35 / 2, iRow + 35 / 2);
-		dc.SelectObject(p_old_brush);
-      
-		// 차례 변경
-		m_bMe = TRUE;
-		m_strMe = _T("당신의 차례입니다.");
-		m_strStatus = _T("원하는 곳을 선택 하세요.");
-		UpdateData(FALSE);
+			// 차례 변경
+			m_bMe = TRUE;
+			m_strMe = _T("당신의 차례입니다.");
+			m_strStatus = _T("원하는 곳을 선택 하세요.");
+			UpdateData(FALSE);
+		}
 	}
 
 	// 게임에서 패배시
