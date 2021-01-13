@@ -68,4 +68,8 @@ public:
 	CStatic m_timer;
 	afx_msg void OnBnClickedButtonGiveup();
 	CButton m_giveup;
+	CStatic m_blackScore;
+	CStatic m_whiteScore;
+	int blackscore = 0;
+	int whitescore = 0;
 };
