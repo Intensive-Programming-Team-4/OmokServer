@@ -333,6 +333,8 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 			p gameP;
 			gameP.row = iRow;
 			gameP.col = iCol;
+			m_bGame[iRow][iCol] = TRUE;
+//			m_bStone[iRow][iCol] = TRUE;
 
 			iCol = (iCol + 1) * 35;
 			iRow = (iRow + 1) * 35;
@@ -384,6 +386,9 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 		m_bGame[vWhite.back().row][vWhite.back().col] = FALSE;
 		m_bStone[vWhite.back().row][vWhite.back().col] = FALSE;
 		vWhite.pop_back();
+		m_bGame[vBlack.back().row][vBlack.back().col] = FALSE;
+		m_bStone[vBlack.back().row][vBlack.back().col] = FALSE;
+		vBlack.pop_back();
 	}
 	Invalidate(FALSE);
 
@@ -702,10 +707,15 @@ void COmokServerDlg::OnBnClickedButtonGiveup()
 void COmokServerDlg::OnBnClickedButtonUndo()
 {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	if (vBlack.size() == 0)
-		return;
 	if (m_bStart && m_bMe && !change) {
+		if (vBlack.size() == 0)
+			return;
+		m_bGame[vBlack.back().row][vBlack.back().col] = FALSE;
+		m_bStone[vBlack.back().row][vBlack.back().col] = FALSE;
 		vBlack.pop_back();
+		m_bGame[vWhite.back().row][vWhite.back().col] = FALSE;
+		m_bStone[vWhite.back().row][vWhite.back().col] = FALSE;
+		vWhite.pop_back();
 		change = TRUE;
 		SendGame(SOC_UNDO, "");
 		Invalidate(TRUE);
