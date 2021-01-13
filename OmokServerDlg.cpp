@@ -274,10 +274,9 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 	int iType = atoi((char*)(LPCTSTR)strTmp);
 
 	if (iType == SOC_GAMESTART) {
-		m_bStartCnt = TRUE;
-
 		// 게임이 시작됨
 		if (m_bStart) {
+			m_bStartCnt = TRUE;
 			MessageBox(_T("게임이 시작되었습니다."));
 			m_strMe = _T("당신의 차례입니다.");
 			m_strStatus = _T("원하는 곳을 선택하세요.");
@@ -285,6 +284,20 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 			UpdateData(FALSE);
 		}
 	}
+
+	// 게임 준비
+	else if (iType == SOC_GAMEREADY) {
+		m_bStartCnt = TRUE;
+		if (m_bStart) {
+			SendGame(SOC_GAMESTART, "");
+			MessageBox(_T("게임이 시작되었습니다."));
+			m_strMe = _T("당신의 차례입니다.");
+			m_strStatus = _T("원하는 곳을 선택하세요.");
+			m_bMe = TRUE;
+			UpdateData(FALSE);
+		}
+	}
+
 
 	// 메시지 전송
 	else if (iType == SOC_TEXT) {
@@ -353,6 +366,10 @@ void COmokServerDlg::DrawRec() {
 	CClientDC dc(this);
 	CBrush br;
 	br.CreateSolidBrush(RGB(218, 164, 43));
+
+	CBrush* bbr = dc.SelectObject(&br);
+	dc.Rectangle(10, 10, 60 + 525, 60 + 525);
+	dc.SelectObject(bbr);
 
 	CBrush* lbr = dc.SelectObject(&br);
 	dc.Rectangle(35, 35, 35 + 525, 35 + 525);
@@ -585,7 +602,7 @@ void COmokServerDlg::OnBnClickedButtonSend()
 void COmokServerDlg::OnBnClickedButtonStart()
 {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	SendGame(SOC_GAMESTART, "");
+	SendGame(SOC_GAMEREADY, "");
 
 	m_bStart = TRUE;
 	GetDlgItem(IDC_BUTTON_START)->EnableWindow(FALSE);

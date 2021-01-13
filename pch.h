@@ -20,5 +20,6 @@
 #define SOC_TEXT			3
 #define SOC_CHECK			4
 #define SOC_GIVEUP			5
+#define SOC_GAMEREADY		6
 
 #endif //PCH_H
