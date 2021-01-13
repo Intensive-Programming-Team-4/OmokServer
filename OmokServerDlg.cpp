@@ -87,6 +87,7 @@ BEGIN_MESSAGE_MAP(COmokServerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_START, &COmokServerDlg::OnBnClickedButtonStart)
 	ON_WM_TIMER()
 	ON_BN_CLICKED(IDC_BUTTON_GIVEUP, &COmokServerDlg::OnBnClickedButtonGiveup)
+	ON_BN_CLICKED(IDC_BUTTON_UNDO, &COmokServerDlg::OnBnClickedButtonUndo)
 END_MESSAGE_MAP()
 
 
@@ -196,6 +197,7 @@ void COmokServerDlg::OnPaint()
 	// 바둑판 생성
 	DrawRec();
 	DrawLine();
+	DrawDol();
 }
 
 // 사용자가 최소화된 창을 끄는 동안에 커서가 표시되도록 시스템에서
@@ -221,6 +223,9 @@ void COmokServerDlg::InitGame()
 	m_bCntEnd = FALSE;
 	m_iOrder = 1;
 	SetTimer(1, 1000, NULL);
+	vBlack.clear();
+	vWhite.clear();
+	change = FALSE;
 }
 
 // 데이터 전송
@@ -324,18 +329,28 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 			CBrush* p_old_brush;
 
 			// 클라이언트 (백돌)
-			p_old_brush = (CBrush*)dc.SelectStockObject(WHITE_BRUSH);
+//			p_old_brush = (CBrush*)dc.SelectStockObject(WHITE_BRUSH);
+			p gameP;
+			gameP.row = iRow;
+			gameP.col = iCol;
 
 			iCol = (iCol + 1) * 35;
 			iRow = (iRow + 1) * 35;
 
-			dc.Ellipse(iCol - 35 / 2, iRow - 35 / 2, iCol + 35 / 2, iRow + 35 / 2);
-			dc.SelectObject(p_old_brush);
+			gameP.x1 = iCol - 35 / 2;
+			gameP.y1 = iRow - 35 / 2;
+			gameP.x2 = iCol + 35 / 2;
+			gameP.y2 = iRow + 35 / 2;
+			vWhite.push_back(gameP);
+
+//			dc.Ellipse(iCol - 35 / 2, iRow - 35 / 2, iCol + 35 / 2, iRow + 35 / 2);
+//			dc.SelectObject(p_old_brush);
 
 			// 차례 변경
 			m_bMe = TRUE;
 			m_strMe = _T("당신의 차례입니다.");
 			m_strStatus = _T("원하는 곳을 선택 하세요.");
+			change = FALSE;
 			UpdateData(FALSE);
 		}
 	}
@@ -365,6 +380,12 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 		score.Format(_T("%d"), ++blackscore);
 		m_blackScore.SetWindowText(score);
 	}
+	else if (iType == SOC_UNDO) {
+		m_bGame[vWhite.back().row][vWhite.back().col] = FALSE;
+		m_bStone[vWhite.back().row][vWhite.back().col] = FALSE;
+		vWhite.pop_back();
+	}
+	Invalidate(FALSE);
 
 	return TRUE;
 }
@@ -426,7 +447,7 @@ void COmokServerDlg::OnLButtonDown(UINT nFlags, CPoint point)
 		CBrush* p_old_brush;
 
 		// 흑돌(서버)
-		p_old_brush = (CBrush*)dc.SelectStockObject(BLACK_BRUSH);
+//		p_old_brush = (CBrush*)dc.SelectStockObject(BLACK_BRUSH);
 
 		point.x = ((point.x + 35 / 2) / 35) * 35;//격 맞춤
 		point.y = ((point.y + 35 / 2) / 35) * 35;
@@ -442,17 +463,23 @@ void COmokServerDlg::OnLButtonDown(UINT nFlags, CPoint point)
 			m_bGame[nRow][nCol] = TRUE;
 			m_bStone[nRow][nCol] = TRUE;
 
-			dc.Ellipse(point.x - 35 / 2, point.y - 35 / 2, point.x + 35 / 2, point.y + 35 / 2);
-			dc.SelectObject(p_old_brush);
-
+			p gameP;
+			gameP.x1 = point.x - 35 / 2;
+			gameP.y1 = point.y - 35 / 2;
+			gameP.x2 = point.x + 35 / 2;
+			gameP.y2 = point.y + 35 / 2;
+			gameP.row = nRow;
+			gameP.col = nCol;
+			vBlack.push_back(gameP);
+			
 			CString str;
 			str.Format(_T("%02d,%02d"), nRow, nCol);
 			SendGame(SOC_CHECK, str);
 
 			//무르기 저장
-			int BackPoint_x, BackPoint_y;
-			BackPoint_x = nCol;
-			BackPoint_y = nRow;
+//			int BackPoint_x, BackPoint_y;
+//			BackPoint_x = nCol;
+//			BackPoint_y = nRow;
 
 
 			register int i;
@@ -588,6 +615,7 @@ void COmokServerDlg::OnLButtonDown(UINT nFlags, CPoint point)
 			UpdateData(FALSE);
 		}
 	}
+	Invalidate(FALSE);
 	CDialogEx::OnLButtonDown(nFlags, point);
 }
 
@@ -668,5 +696,36 @@ void COmokServerDlg::OnBnClickedButtonGiveup()
 		CString score;
 		score.Format(_T("%d"), ++whitescore);
 		m_whiteScore.SetWindowText(score);
+	}
+}
+
+void COmokServerDlg::OnBnClickedButtonUndo()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	if (vBlack.size() == 0)
+		return;
+	if (m_bStart && m_bMe && !change) {
+		vBlack.pop_back();
+		change = TRUE;
+		SendGame(SOC_UNDO, "");
+		Invalidate(TRUE);
+	}
+}
+
+
+void COmokServerDlg::DrawDol()
+{
+	// TODO: 여기에 구현 코드 추가.
+	CClientDC dc(this);
+	CBrush* p_old_brush;
+	for (iter = vBlack.begin(); iter != vBlack.end(); iter++) {
+		p_old_brush = (CBrush*)dc.SelectStockObject(BLACK_BRUSH);
+		dc.Ellipse((*iter).x1, (*iter).y1, (*iter).x2, (*iter).y2);
+		dc.SelectObject(p_old_brush);
+	}
+	for (iter = vWhite.begin(); iter != vWhite.end(); iter++) {
+		p_old_brush = (CBrush*)dc.SelectStockObject(WHITE_BRUSH);
+		dc.Ellipse((*iter).x1, (*iter).y1, (*iter).x2, (*iter).y2);
+		dc.SelectObject(p_old_brush);
 	}
 }
