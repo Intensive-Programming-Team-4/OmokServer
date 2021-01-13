@@ -72,6 +72,8 @@ void COmokServerDlg::DoDataExchange(CDataExchange* pDX)
 	//  DDX_Text(pDX, IDC_STATIC_TIMER, m_timer);
 	DDX_Control(pDX, IDC_STATIC_TIMER, m_timer);
 	DDX_Control(pDX, IDC_BUTTON_GIVEUP, m_giveup);
+	DDX_Control(pDX, IDC_STATIC_BLACKSCORE, m_blackScore);
+	DDX_Control(pDX, IDC_STATIC_WHITESCORE, m_whiteScore);
 }
 
 BEGIN_MESSAGE_MAP(COmokServerDlg, CDialogEx)
@@ -346,6 +348,10 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 		InitGame();
 		Invalidate(TRUE);
 		GetDlgItem(IDC_BUTTON_START)->EnableWindow(TRUE);
+
+		CString score;
+		score.Format(_T("%d"), ++whitescore);
+		m_whiteScore.SetWindowText(score);
 	}
 	else if (iType == SOC_GIVEUP) {
 		m_bSvrEnd = TRUE;
@@ -354,6 +360,10 @@ LPARAM COmokServerDlg::OnReceive(UINT wParam, LPARAM lParam) {
 		InitGame();
 		Invalidate(TRUE);
 		GetDlgItem(IDC_BUTTON_START)->EnableWindow(TRUE);
+
+		CString score;
+		score.Format(_T("%d"), ++blackscore);
+		m_blackScore.SetWindowText(score);
 	}
 
 	return TRUE;
@@ -565,6 +575,10 @@ void COmokServerDlg::OnLButtonDown(UINT nFlags, CPoint point)
 				InitGame();
 				Invalidate(TRUE);
 				GetDlgItem(IDC_BUTTON_START)->EnableWindow(TRUE);
+
+				CString score;
+				score.Format(_T("%d"), ++blackscore);
+				m_blackScore.SetWindowText(score);
 			}
 
 			// 차례 변경
@@ -650,5 +664,9 @@ void COmokServerDlg::OnBnClickedButtonGiveup()
 		InitGame();
 		Invalidate(TRUE);
 		GetDlgItem(IDC_BUTTON_START)->EnableWindow(TRUE);
+
+		CString score;
+		score.Format(_T("%d"), ++whitescore);
+		m_whiteScore.SetWindowText(score);
 	}
 }
