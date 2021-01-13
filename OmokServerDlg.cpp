@@ -471,7 +471,7 @@ void COmokServerDlg::OnLButtonDown(UINT nFlags, CPoint point)
 			gameP.row = nRow;
 			gameP.col = nCol;
 			vBlack.push_back(gameP);
-
+			
 			CString str;
 			str.Format(_T("%02d,%02d"), nRow, nCol);
 			SendGame(SOC_CHECK, str);
