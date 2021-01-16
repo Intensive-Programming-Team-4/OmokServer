@@ -6,7 +6,7 @@
 #include <vector>
 #include <utility>
 
-typedef struct Point {
+typedef struct Point { // 돌이 놓여진 좌표 구조체
 	int x1, y1;
 	int x2, y2;
 	int row, col;
@@ -70,20 +70,20 @@ public:
 	CString m_strSend;
 	afx_msg void OnBnClickedButtonSend();
 	afx_msg void OnBnClickedButtonStart();
-	int sec = 30;
+	int sec = 30; // 타이머
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
-	CStatic m_timer;
+	CStatic m_timer; // 화면에 표시할 타이머 변수
 	afx_msg void OnBnClickedButtonGiveup();
-	CButton m_giveup;
-	CStatic m_blackScore;
-	CStatic m_whiteScore;
+	CButton m_giveup; // 기권 버튼
+	CStatic m_blackScore; // 흑돌 점수 표시할 텍스트
+	CStatic m_whiteScore; // 백돌 점수 표시할 텍스트
 	int blackscore = 0;
 	int whitescore = 0;
 
-	std::vector<p> vBlack;
-	std::vector<p> vWhite;
+	std::vector<p> vBlack; // 흑돌의 좌표를 저장할 벡터
+	std::vector<p> vWhite; // 백돌의 좌표를 저장할 벡터
 	std::vector<p>::iterator iter;
 	afx_msg void OnBnClickedButtonUndo();
 	void DrawDol();
-	BOOL change;
+	BOOL change; // 무르기 버튼을 한 번 누르면 다음 턴에 재사용 가능
 };
