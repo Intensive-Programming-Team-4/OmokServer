@@ -209,8 +209,8 @@ HCURSOR COmokServerDlg::OnQueryDragIcon()
 
 void COmokServerDlg::InitGame()
 {
-	for (int i = 0; i < 15; i++) {
-		for (int j = 0; j < 15; j++) {
+	for (int i = 0; i < 16; i++) {
+		for (int j = 0; j < 16; j++) {
 			m_bGame[i][j] = FALSE;
 			m_bStone[i][j] = FALSE;
 		}
@@ -454,171 +454,655 @@ void COmokServerDlg::OnLButtonDown(UINT nFlags, CPoint point)
 		// 흑돌(서버)
 //		p_old_brush = (CBrush*)dc.SelectStockObject(BLACK_BRUSH);
 
-		point.x = ((point.x + 35 / 2) / 35) * 35;//격 맞춤
-		point.y = ((point.y + 35 / 2) / 35) * 35;
+        point.x = ((point.x + 35 / 2) / 35) * 35;//격 맞춤
+        point.y = ((point.y + 35 / 2) / 35) * 35;
 
-		int nCol = point.x / 35 - 1;
-		int nRow = point.y / 35 - 1;
+        int nCol = point.x / 35 - 1;
+        int nRow = point.y / 35 - 1;
 
-		// 바둑알이 놓인 곳이 아니면
-		if (!m_bGame[nRow][nCol]) {
+        // 바둑알이 놓인 곳이 아니면
+        if (!m_bGame[nRow][nCol]) {
 
-			int Win = 0;
+            int Win = 0;
 
-			m_bGame[nRow][nCol] = TRUE;
-			m_bStone[nRow][nCol] = TRUE;
-
-			p gameP;
-			gameP.x1 = point.x - 35 / 2;
-			gameP.y1 = point.y - 35 / 2;
-			gameP.x2 = point.x + 35 / 2;
-			gameP.y2 = point.y + 35 / 2;
-			gameP.row = nRow;
-			gameP.col = nCol;
-			vBlack.push_back(gameP);
-			
-			CString str;
-			str.Format(_T("%02d,%02d"), nRow, nCol);
-			SendGame(SOC_CHECK, str);
-
-			//무르기 저장
-//			int BackPoint_x, BackPoint_y;
-//			BackPoint_x = nCol;
-//			BackPoint_y = nRow;
+            m_bGame[nRow][nCol] = TRUE;
+            m_bStone[nRow][nCol] = TRUE;
 
 
-			register int i;
-			int nCount = 0;
+            int num33 = 0;
+            int check_33 = 0;
+            //33체크
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    if (nRow - 3 + i + j < 0) continue;
+                    if (nRow - 3 + i + j > 15) continue;
 
-			// 가로 방향 승리 판정
-			for (i = 0; i < 19; i++) {
-				if (m_bStone[nRow][i] == 1)
-					nCount++;
-				else
-					nCount = 0;
+                    if ((m_bGame[nRow - 3 + i + j][nCol] == 0) || (m_bStone[nRow - 3 + i + j][nCol] == 1))
 
-				if (nCount == 5) { Win = 1; }
-			}
+                    {
+                        if (m_bStone[nRow - 3 + i + j][nCol] == 1)
+                            if (((m_bGame[nRow - 4 + i + j][nCol] == 0) || (m_bStone[nRow - 4 + i + j][nCol] == 1)) && ((m_bGame[nRow - 2 + i + j][nCol] == 0) || (m_bStone[nRow - 2 + i + j][nCol] == 1)))
+                                num33++;
+                    }
+                }
 
-			// 세로 방향 승리 판정
-			nCount = 0;
-			for (i = 0; i < 19; i++)
-			{
-				if (m_bStone[i][nCol] == 1) { nCount++; }
-				else { nCount = 0; }
+                if (num33 == 3)
+                {
+                    check_33++;
+                    num33 = 0;
+                    break;
+                }
+                else
+                    num33 = 0;
+            }
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    if (nCol - 3 + i + j < 0) continue;
+                    if (nCol - 4 + i + j > 15) continue;
 
-				if (nCount == 5) { Win = 1; }
-			}
+                    if ((m_bGame[nRow][nCol - 3 + i + j] == 0) || (m_bStone[nRow][nCol - 3 + i + j] == 1))
 
-			////// 대각선 방향 승리 판정
+                    {
+                        if (m_bStone[nRow][nCol - 3 + i + j] == 1)
+                            if (((m_bGame[nRow][nCol - 4 + i + j] == 0) || (m_bStone[nRow][nCol - 4 + i + j] == 1)) && ((m_bGame[nRow][nCol - 2 + i + j] == 0) || (m_bStone[nRow][nCol - 2 + i + j] == 1)))
+                                num33++;
 
-			int sRow, sCol; // 왼쪽 위의 시작 위치
-			int eRow, eCol; // 오른쪽 아래의 끝 위치
-			int RowMover, ColMover;
+                    }
+                }
 
-			RowMover = nRow;
-			ColMover = nCol;
-			while (RowMover != 0 && ColMover != 0)
-			{
-				RowMover--;
-				ColMover--;
-			}
+                if (num33 == 3)
+                {
+                    check_33++;
+                    num33 = 0;
+                    break;
+                }
+                else
+                    num33 = 0;
+            }
 
-			// 대각 방향 최-좌상단 좌표 획득
-			sRow = RowMover;
-			sCol = ColMover;
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    if (nRow - 3 + i + j < 0) continue;
+                    if (nRow - 3 + i + j > 15) continue;
 
-			RowMover = nRow;
-			ColMover = nCol;
-			while (RowMover != 16 && ColMover != 16) {
-				RowMover++;
-				ColMover++;
-			}
+                    if (nCol - 3 + i + j < 0) continue;
+                    if (nCol - 3 + i + j > 15) continue;
 
-			// 대각 방향 최-우하단 좌표 획득
-			eRow = RowMover;
-			eCol = ColMover;
+                    if ((m_bGame[nRow - 3 + i + j][nCol - 3 + i + j] == 0) || (m_bStone[nRow - 3 + i + j][nCol - 3 + i + j] == 1))
 
-			// 왼쪽 위에서 오른쪽 아래로 향하는 대각선 방향의 오목을 검색
-			nCount = 0;
-			while (sCol <= eCol && sRow <= eRow)
-			{
-				if (m_bStone[sRow][sCol] == 1)
-				{
-					nCount++;
-				}
-				else
-				{
-					nCount = 0;
-				}
+                    {
+                        if (m_bStone[nRow - 3 + i + j][nCol - 3 + i + j] == 1)
+                            if (((m_bGame[nRow - 4 + i + j][nCol - 4 + i + j] == 0) || (m_bStone[nRow - 4 + i + j][nCol - 4 + i + j] == 1)) && (m_bGame[nRow - 2 + i + j][nCol - 2 + i + j] == 0) || (m_bStone[nRow - 2 + i + j][nCol - 2 + i + j] == 1))
+                                num33++;
+                    }
+                }
 
-				if (nCount == 5) { Win = 1; }
-				sRow++;
-				sCol++;
-			}
+                if (num33 == 3)
+                {
+                    check_33++;
+                    num33 = 0;
+                    break;
+                }
+                else
+                    num33 = 0;
+            }
 
-			RowMover = nRow;
-			ColMover = nCol;
-			while (RowMover != 0 && ColMover != 16) {
-				RowMover--;
-				ColMover++;
-			}
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    if (nRow - 3 + i + j < 0) continue;
+                    if (nRow - 3 + i + j > 15) continue;
 
-			// 대각 방향 최-우상단 좌표 획득
-			sRow = RowMover;
-			sCol = ColMover;
+                    if (nCol + 3 - i - j < 0) continue;
+                    if (nCol + 3 - i - j > 15) continue;
 
-			RowMover = nRow;
-			ColMover = nCol;
-			while (RowMover != 16 && ColMover != 0) {
-				RowMover++;
-				ColMover--;
-			}
+                    if ((m_bGame[nRow - 3 + i + j][nCol + 3 - i - j] == 0) || (m_bStone[nRow - 3 + i + j][nCol + 3 - i - j] == 1))
 
-			// 대각 방향 최-좌하단 좌표 획득
-			eRow = RowMover;
-			eCol = ColMover;
+                    {
+                        if (m_bStone[nRow - 3 + i + j][nCol + 3 - i - j] == 1)
+                            if (((m_bGame[nRow - 4 + i + j][nCol + 4 - i - j] == 0) || (m_bStone[nRow - 4 + i + j][nCol + 4 - i - j] == 1)) && (m_bGame[nRow - 2 + i + j][nCol + 2 - i - j] == 0) || (m_bStone[nRow - 2 + i + j][nCol + 2 - i - j] == 1))
+                                num33++;
+                    }
+                }
 
-			// 왼쪽 아래에서 오른쪽 위로 향하는 대각선 방향의 오목을 검색
-			nCount = 0;
-			while (sCol >= eCol && sRow <= eRow)
-			{
-				if (m_bStone[sRow][sCol] == 1)
-				{
-					nCount++;
-				}
-				else
-				{
-					nCount = 0;
-				}
+                if (num33 == 3)
+                {
+                    check_33++;
+                    num33 = 0;
+                    break;
+                }
+                else
+                    num33 = 0;
+            }
 
-				if (nCount == 5) { Win = 1; }
-				sRow++;
-				sCol--;
-			}
+            int num44 = 0;
+            int check_44 = 0;
+            //44체크
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    if (nRow - 4 + i + j < 0) continue;
+                    if (nRow - 4 + i + j > 15) continue;
+
+                    if ((m_bGame[nRow - 4 + i + j][nCol] == 0) || (m_bStone[nRow - 4 + i + j][nCol] == 1))
+
+                    {
+                        if (m_bStone[nRow - 4 + i + j][nCol] == 1)
+                            num44++;
+                    }
+                }
+
+                if (num44 == 4)
+                {
+                    check_44++;
+                    num44 = 0;
+                    break;
+                }
+                else
+                    num44 = 0;
+            }
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    if (nCol - 4 + i + j < 0) continue;
+                    if (nCol - 4 + i + j > 15) continue;
+
+                    if ((m_bGame[nRow][nCol - 4 + i + j] == 0) || (m_bStone[nRow][nCol - 4 + i + j] == 1))
+
+                    {
+                        if (m_bStone[nRow][nCol - 4 + i + j] == 1)
+                            num44++;
+                    }
+                }
+
+                if (num44 == 4)
+                {
+                    check_44++;
+                    num44 = 0;
+                    break;
+                }
+                else
+                    num44 = 0;
+            }
+
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    if (nRow - 4 + i + j < 0) continue;
+                    if (nRow - 4 + i + j > 15) continue;
+
+                    if (nCol - 4 + i + j < 0) continue;
+                    if (nCol - 4 + i + j > 15) continue;
+
+                    if ((m_bGame[nRow - 4 + i + j][nCol - 4 + i + j] == 0) || (m_bStone[nRow - 4 + i + j][nCol - 4 + i + j] == 1))
+
+                    {
+                        if (m_bStone[nRow - 4 + i + j][nCol - 4 + i + j] == 1)
+                            num44++;
+                    }
+                }
+
+                if (num44 == 4)
+                {
+                    check_44++;
+                    num44 = 0;
+                    break;
+                }
+                else
+                    num44 = 0;
+            }
+
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    if (nRow - 4 + i + j < 0) continue;
+                    if (nRow - 4 + i + j > 15) continue;
+
+                    if (nCol + 4 - i - j < 0) continue;
+                    if (nCol + 4 - i - j > 15) continue;
+
+                    if ((m_bGame[nRow - 4 + i + j][nCol + 4 - i - j] == 0) || (m_bStone[nRow - 4 + i + j][nCol + 4 - i - j] == 1))
+
+                    {
+                        if (m_bStone[nRow - 4 + i + j][nCol + 4 - i - j] == 1)
+                            num44++;
+                    }
+                }
+
+                if (num44 == 4)
+                {
+                    check_44++;
+                    num44 = 0;
+                    break;
+                }
+                else
+                    num44 = 0;
+            }
+
+            int num34 = 0;
+            int check_34 = 0;
+            //34체크
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    if (nRow - 3 + i + j < 0) continue;
+                    if (nRow - 3 + i + j > 15) continue;
+
+                    if ((m_bGame[nRow - 3 + i + j][nCol] == 0) || (m_bStone[nRow - 3 + i + j][nCol] == 1))
+
+                    {
+                        if (m_bStone[nRow - 3 + i + j][nCol] == 1)
+                            num34++;
+                    }
+                }
+
+                if (num34 == 3)
+                {
+                    check_34++;
+                    num34 = 0;
+                    break;
+                }
+                else
+                    num34 = 0;
+            }
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    if (nCol - 3 + i + j < 0) continue;
+                    if (nCol - 3 + i + j > 15) continue;
+
+                    if ((m_bGame[nRow][nCol - 3 + i + j] == 0) || (m_bStone[nRow][nCol - 3 + i + j] == 1))
+
+                    {
+                        if (m_bStone[nRow][nCol - 3 + i + j] == 1)
+                            num34++;
+                    }
+                }
+
+                if (num34 == 3)
+                {
+                    check_34++;
+                    num34 = 0;
+                    break;
+                }
+                else
+                    num34 = 0;
+            }
+
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    if (nRow - 3 + i + j < 0) continue;
+                    if (nRow - 3 + i + j > 15) continue;
+
+                    if (nCol - 3 + i + j < 0) continue;
+                    if (nCol - 3 + i + j > 15) continue;
+
+                    if ((m_bGame[nRow - 3 + i + j][nCol - 3 + i + j] == 0) || (m_bStone[nRow - 3 + i + j][nCol - 3 + i + j] == 1))
+
+                    {
+                        if (m_bStone[nRow - 3 + i + j][nCol - 3 + i + j] == 1)
+                            num34++;
+                    }
+                }
+
+                if (num34 == 3)
+                {
+                    check_34++;
+                    num34 = 0;
+                    break;
+                }
+                else
+                    num34 = 0;
+            }
+
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    if (nRow - 3 + i + j < 0) continue;
+                    if (nRow - 3 + i + j > 15) continue;
+
+                    if (nCol + 3 - i - j < 0) continue;
+                    if (nCol + 3 - i - j > 15) continue;
+
+                    if ((m_bGame[nRow - 3 + i + j][nCol + 3 - i - j] == 0) || (m_bStone[nRow - 3 + i + j][nCol + 3 - i - j] == 1))
+
+                    {
+                        if (m_bStone[nRow - 3 + i + j][nCol + 3 - i - j] == 1)
+                            num34++;
+                    }
+                }
+
+                if (num34 == 3)
+                {
+                    check_34++;
+                    num34 = 0;
+                    break;
+                }
+                else
+                    num34 = 0;
+            }
+
+            //6목체크
+            int num66 = 0;
+            int check_66 = 0;
+
+            for (int i = 0; i < 6; i++)
+            {
+                for (int j = 0; j < 6; j++)
+                {
+                    if (nRow - 5 + i + j < 0) continue;
+                    if (nRow - 5 + i + j > 15) continue;
+
+                    if ((m_bGame[nRow - 4 + i + j][nCol] == 0) || (m_bStone[nRow - 4 + i + j][nCol] == 1))
+
+                    {
+                        if (m_bStone[nRow - 4 + i + j][nCol] == 1)
+                            num66++;
+                    }
+                }
+
+                if (num66 == 6)
+                {
+                    check_66++;
+                    num66 = 0;
+                    break;
+                }
+                else
+                    num66 = 0;
+            }
+            for (int i = 0; i < 6; i++)
+            {
+                for (int j = 0; j < 6; j++)
+                {
+                    if (nCol - 4 + i + j < 0) continue;
+                    if (nCol - 4 + i + j > 15) continue;
+
+                    if ((m_bGame[nRow][nCol - 4 + i + j] == 0) || (m_bStone[nRow][nCol - 4 + i + j] == 1))
+
+                    {
+                        if (m_bStone[nRow][nCol - 4 + i + j] == 1)
+                            num66++;
+                    }
+                }
+
+                if (num66 == 6)
+                {
+                    check_66++;
+                    num66 = 0;
+                    break;
+                }
+                else
+                    num66 = 0;
+            }
+
+            for (int i = 0; i < 6; i++)
+            {
+                for (int j = 0; j < 6; j++)
+                {
+                    if (nRow - 4 + i + j < 0) continue;
+                    if (nRow - 4 + i + j > 15) continue;
+
+                    if (nCol - 4 + i + j < 0) continue;
+                    if (nCol - 4 + i + j > 15) continue;
+
+                    if ((m_bGame[nRow - 4 + i + j][nCol - 4 + i + j] == 0) || (m_bStone[nRow - 4 + i + j][nCol - 4 + i + j] == 1))
+
+                    {
+                        if (m_bStone[nRow - 4 + i + j][nCol - 4 + i + j] == 1)
+                            num66++;
+                    }
+                }
+
+                if (num66 == 6)
+                {
+                    check_66++;
+                    num66 = 0;
+                    break;
+                }
+                else
+                    num66 = 0;
+            }
+
+            for (int i = 0; i < 6; i++)
+            {
+                for (int j = 0; j < 6; j++)
+                {
+                    if (nRow - 4 + i + j < 0) continue;
+                    if (nRow - 4 + i + j > 15) continue;
+
+                    if (nCol + 4 - i - j < 0) continue;
+                    if (nCol + 4 - i - j > 15) continue;
+
+                    if ((m_bGame[nRow - 4 + i + j][nCol + 4 - i - j] == 0) || (m_bStone[nRow - 4 + i + j][nCol + 4 - i - j] == 1))
+
+                    {
+                        if (m_bStone[nRow - 4 + i + j][nCol + 4 - i - j] == 1)
+                            num66++;
+                    }
+                }
+
+                if (num66 == 6)
+                {
+                    check_66++;
+                    num66 = 0;
+                    break;
+                }
+                else
+                    num66 = 0;
+            }
+            if (check_66 >= 1)
+            {//66
+                m_bGame[nRow][nCol] = FALSE;
+                m_bStone[nRow][nCol] = FALSE;
+                CWnd::MessageBox("6목입니다.", "6목", MB_OK);
+                return;
+            }
 
 
-			if (Win == 1)
-			{
-				m_bSvrEnd = TRUE;
-				SendGame(SOC_GAMEEND, "");
-				CWnd::MessageBox("흑이 승리했습니다. 새 게임을 시작합니다.", "흑돌 승리", MB_OK);
-				Sleep(1000);
-				InitGame();
-				Invalidate(TRUE);
-				GetDlgItem(IDC_BUTTON_START)->EnableWindow(TRUE);
+            p gameP;
+            gameP.x1 = point.x - 35 / 2;
+            gameP.y1 = point.y - 35 / 2;
+            gameP.x2 = point.x + 35 / 2;
+            gameP.y2 = point.y + 35 / 2;
+            gameP.row = nRow;
+            gameP.col = nCol;
 
-				CString score;
-				score.Format(_T("%d"), ++blackscore);
-				m_blackScore.SetWindowText(score);
-			}
+            //무르기 저장
+   //         int BackPoint_x, BackPoint_y;
+   //         BackPoint_x = nCol;
+   //         BackPoint_y = nRow;
 
-			// 차례 변경
-			m_bMe = FALSE;
-			m_strMe = _T("상대방의 차례 입니다.");
-			m_strStatus = _T("대기하세요.");
-			UpdateData(FALSE);
-		}
+            register int i;
+            int nCount = 0;
+
+            // 가로 방향 승리 판정
+            for (i = 0; i < 19; i++) {
+                if (m_bStone[nRow][i] == 1)
+                    nCount++;
+                else
+                    nCount = 0;
+
+                if (nCount == 5) { Win = 1; }
+            }
+
+            // 세로 방향 승리 판정
+            nCount = 0;
+            for (i = 0; i < 19; i++)
+            {
+                if (m_bStone[i][nCol] == 1) { nCount++; }
+                else { nCount = 0; }
+
+                if (nCount == 5) { Win = 1; }
+            }
+
+            ////// 대각선 방향 승리 판정
+
+            int sRow, sCol; // 왼쪽 위의 시작 위치
+            int eRow, eCol; // 오른쪽 아래의 끝 위치
+            int RowMover, ColMover;
+
+            RowMover = nRow;
+            ColMover = nCol;
+            while (RowMover != 0 && ColMover != 0)
+            {
+                RowMover--;
+                ColMover--;
+            }
+
+            // 대각 방향 최-좌상단 좌표 획득
+            sRow = RowMover;
+            sCol = ColMover;
+
+            RowMover = nRow;
+            ColMover = nCol;
+            while (RowMover != 16 && ColMover != 16) {
+                RowMover++;
+                ColMover++;
+            }
+
+            // 대각 방향 최-우하단 좌표 획득
+            eRow = RowMover;
+            eCol = ColMover;
+
+            // 왼쪽 위에서 오른쪽 아래로 향하는 대각선 방향의 오목을 검색
+            nCount = 0;
+            while (sCol <= eCol && sRow <= eRow)
+            {
+                if (m_bStone[sRow][sCol] == 1)
+                {
+                    nCount++;
+                }
+                else
+                {
+                    nCount = 0;
+                }
+
+                if (nCount == 5) { Win = 1; }
+                sRow++;
+                sCol++;
+            }
+
+            RowMover = nRow;
+            ColMover = nCol;
+            while (RowMover != 0 && ColMover != 16) {
+                RowMover--;
+                ColMover++;
+            }
+
+            // 대각 방향 최-우상단 좌표 획득
+            sRow = RowMover;
+            sCol = ColMover;
+
+            RowMover = nRow;
+            ColMover = nCol;
+            while (RowMover != 16 && ColMover != 0) {
+                RowMover++;
+                ColMover--;
+            }
+
+            // 대각 방향 최-좌하단 좌표 획득
+            eRow = RowMover;
+            eCol = ColMover;
+
+            // 왼쪽 아래에서 오른쪽 위로 향하는 대각선 방향의 오목을 검색
+            nCount = 0;
+            while (sCol >= eCol && sRow <= eRow)
+            {
+                if (m_bStone[sRow][sCol] == 1)
+                {
+                    nCount++;
+                }
+                else
+                {
+                    nCount = 0;
+                }
+
+                if (nCount == 5) { Win = 1; }
+                sRow++;
+                sCol--;
+            }
+
+
+            if (Win == 1)
+            {
+
+
+
+                m_bSvrEnd = TRUE;
+                SendGame(SOC_GAMEEND, "");
+                CWnd::MessageBox("흑이 승리했습니다. 새 게임을 시작합니다.", "흑돌 승리", MB_OK);
+                Sleep(1000);
+                InitGame();
+                Invalidate(TRUE);
+                GetDlgItem(IDC_BUTTON_START)->EnableWindow(TRUE);
+
+                CString score;
+                score.Format(_T("%d"), ++blackscore);
+                m_blackScore.SetWindowText(score);
+            }
+            else {
+
+                if (check_44 == 1 && ((check_34 - check_44) == 1))
+                {
+                    vBlack.push_back(gameP);
+
+                    CString str;
+                    str.Format(_T("%02d,%02d"), nRow, nCol);
+                    SendGame(SOC_CHECK, str);
+
+                }
+
+                else if ((check_44 >= 2))
+                {
+                    //44걸림
+                    m_bGame[nRow][nCol] = FALSE;
+                    m_bStone[nRow][nCol] = FALSE;
+                    CWnd::MessageBox("44입니다.", "\44", MB_OK);
+                    return;
+                }
+
+                else if (check_33 >= 2)
+                {
+                    //33걸림
+
+                    m_bGame[nRow][nCol] = FALSE;
+                    m_bStone[nRow][nCol] = FALSE;
+                    CWnd::MessageBox("33입니다.", "\33", MB_OK);
+                    return;
+                }
+                else
+                {
+                    vBlack.push_back(gameP);
+
+                    CString str;
+                    str.Format(_T("%02d,%02d"), nRow, nCol);
+                    SendGame(SOC_CHECK, str);
+
+                }
+            }
+
+            // 차례 변경
+            m_bMe = FALSE;
+            m_strMe = _T("상대방의 차례 입니다.");
+            m_strStatus = _T("대기하세요.");
+            UpdateData(FALSE);
+        }
 	}
 	Invalidate(FALSE);
 	CDialogEx::OnLButtonDown(nFlags, point);
